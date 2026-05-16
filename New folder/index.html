@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>CRM Dashboard</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-link active" data-page="dashboard" onclick="navigate('dashboard');return false;">
+      <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-link" data-page="customers" onclick="navigate('customers');return false;">
+      <i class="fa-solid fa-users"></i><span>Customers</span>
+    </a>
+    <a href="#" class="nav-link" data-page="Leads" onclick="navigate('pipeline');return false;">
+      <i class="fa-solid fa-filter"></i><span>Leads</span>
+    </a>
+    <a href="#" class="nav-link" data-page="invoices" onclick="navigate('invoices');return false;">
+      <i class="fa-solid fa-file-invoice-dollar"></i><span>Invoices</span>
+    </a>
+    <a href="#" class="nav-link" data-page="activity" onclick="navigate('activity');return false;">
+      <i class="fa-solid fa-clock-rotate-left"></i><span>Activity Log</span>
+    </a>
+    <a href="#" class="nav-link" data-page="reports" onclick="navigate('reports');return false;">
+      <i class="fa-solid fa-chart-bar"></i><span>Reports</span>
+    </a>
+    <a href="#" class="nav-link" data-page="settings" onclick="navigate('settings');return false;">
+      <i class="fa-solid fa-gear"></i><span>Settings</span>
+    </a>
+    <a href="#" class="nav-link" data-page="engagement" onclick="navigate('engagement');return false;">
+      <i class="fa-solid fa-rocket"></i><span>Engagement</span>
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="btn-dark-toggle" onclick="toggleDarkMode()" id="darkModeBtn">
+      <i class="fa-solid fa-moon"></i><span>Dark Mode</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main-content">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="topbar">
+      <div><h1 class="page-title">Dashboard</h1><p class="page-subtitle">Welcome back! Here's your overview.</p></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fa-solid fa-users"></i></div>
+        <div><p class="stat-label">Total Customers</p><h2 class="stat-value" id="stat-customers">0</h2></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-dollar-sign"></i></div>
+        <div><p class="stat-label">Total Revenue</p><h2 class="stat-value" id="stat-revenue">$0</h2></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+        <div><p class="stat-label">Invoices</p><h2 class="stat-value" id="stat-invoices">0</h2></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><i class="fa-solid fa-filter"></i></div>
+        <div><p class="stat-label">Leads</p><h2 class="stat-value" id="stat-pipeline">$0</h2></div>
+      </div>
+    </div>
+    <div class="two-col-grid">
+      <div class="card">
+        <div class="card-header"><h2>Revenue Trend</h2></div>
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Customer Status</h2></div>
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Recent Activity</h2></div>
+      <div id="recentActivity" class="activity-list">
+        <p class="empty-state">No recent activity.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CUSTOMERS ── -->
+  <div class="page" id="page-customers">
+    <div class="topbar">
+      <div><h1 class="page-title">Customers</h1><p class="page-subtitle">Manage your customer base</p></div>
+      <div class="topbar-actions">
+        <button class="btn-secondary" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        <button class="btn-primary" onclick="openCustomerModal()"><i class="fa-solid fa-plus"></i> Add Customer</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Customer List <span class="badge" id="customerCount">0</span></h2>
+        <input type="text" id="searchInput" placeholder="Search customers…" class="search-input" oninput="searchCustomers()">
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="customerTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="customerEmpty" style="display:none;">No customers found.</p>
+    </div>
+  </div>
+
+  <!-- ── PIPELINE ── -->
+  <div class="page" id="page-pipeline">
+    <div class="topbar">
+      <div><h1 class="page-title">Sales Pipeline</h1><p class="page-subtitle">Drag cards to move deals between stages</p></div>
+      <button class="btn-primary" onclick="openLeadModal()"><i class="fa-solid fa-plus"></i> Add Lead</button>
+    </div>
+    <div class="kanban-board" id="kanbanBoard"></div>
+  </div>
+
+  <!-- ── INVOICES ── -->
+  <div class="page" id="page-invoices">
+    <div class="topbar">
+      <div><h1 class="page-title">Invoices</h1><p class="page-subtitle">Create and manage invoices</p></div>
+      <button class="btn-primary" onclick="openInvoiceModal()"><i class="fa-solid fa-plus"></i> Create Invoice</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-file"></i></div><div><p class="stat-label">Draft</p><h2 class="stat-value" id="inv-draft">0</h2></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-paper-plane"></i></div><div><p class="stat-label">Sent</p><h2 class="stat-value" id="inv-sent">0</h2></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-check-circle"></i></div><div><p class="stat-label">Paid</p><h2 class="stat-value" id="inv-paid">0</h2></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-clock"></i></div><div><p class="stat-label">Overdue</p><h2 class="stat-value" id="inv-overdue">0</h2></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Invoice List</h2></div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Date</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="invoiceTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="invoiceEmpty" style="display:none;">No invoices yet.</p>
+    </div>
+  </div>
+
+  <!-- ── ACTIVITY LOG ── -->
+  <div class="page" id="page-activity">
+    <div class="topbar">
+      <div><h1 class="page-title">Activity Log</h1><p class="page-subtitle">All system actions are tracked here</p></div>
+      <button class="btn-secondary" onclick="clearActivityLog()"><i class="fa-solid fa-trash"></i> Clear Log</button>
+    </div>
+    <div class="card">
+      <div id="activityTimeline" class="activity-timeline"></div>
+      <p class="empty-state" id="activityEmpty" style="display:none;">No activity recorded yet.</p>
+    </div>
+  </div>
+<!--  -->
+  <!-- ── REPORTS ── -->  
+  <div class="page" id="page-reports">
+    <div class="topbar">
+      <div><h1 class="page-title">Reports & Analytics</h1><p class="page-subtitle">Business performance insights</p></div>
+    </div>
+    <div class="two-col-grid">
+      <div class="card"><div class="card-header"><h2>Monthly Revenue</h2></div><canvas id="monthlyRevenueChart"></canvas></div>
+      <div class="card"><div class="card-header"><h2>Leads</h2></div><canvas id="pipelineChart"></canvas></div>
+    </div>
+    <div class="two-col-grid">
+      <div class="card"><div class="card-header"><h2>Invoice Status</h2></div><canvas id="invoiceStatusChart"></canvas></div>
+      <div class="card">
+        <div class="card-header"><h2>Top Customers by Revenue</h2></div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>Rank</th><th>Customer</th><th>Revenue</th></tr></thead>
+          <tbody id="topCustomersBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div class="page" id="page-settings">
+    <div class="topbar">
+      <div><h1 class="page-title">Settings</h1><p class="page-subtitle">Customize your CRM experience</p></div>
+    </div>
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-header"><h2><i class="fa-solid fa-building"></i> Company Info</h2></div>
+        <div class="form-group"><label>Company Name</label><input type="text" id="settingCompany" class="form-input" value=""></div>
+        <div class="form-group"><label>Currency Symbol</label><input type="text" id="settingCurrency" class="form-input" value="$" maxlength="3"></div>
+        <div class="form-group"><label>Admin Email</label><input type="email" id="settingEmail" class="form-input" placeholder="admin@company.com"></div>
+        <button class="btn-primary" style="margin-top:16px" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2><i class="fa-solid fa-palette"></i> Appearance</h2></div>
+        <div class="form-group"><label>Dark Mode</label>
+          <label class="toggle-switch"><input type="checkbox" id="darkModeCheck" onchange="toggleDarkMode()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group"><label>Accent Color</label>
+          <div class="color-swatches">
+            <button class="swatch active" style="background:#4f46e5" onclick="setAccent('#4f46e5','#4338ca',this)"></button>
+            <button class="swatch" style="background:#0ea5e9" onclick="setAccent('#0ea5e9','#0284c7',this)"></button>
+            <button class="swatch" style="background:#10b981" onclick="setAccent('#10b981','#059669',this)"></button>
+            <button class="swatch" style="background:#f59e0b" onclick="setAccent('#f59e0b','#d97706',this)"></button>
+            <button class="swatch" style="background:#ef4444" onclick="setAccent('#ef4444','#dc2626',this)"></button>
+            <button class="swatch" style="background:#8b5cf6" onclick="setAccent('#8b5cf6','#7c3aed',this)"></button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2><i class="fa-solid fa-database"></i> Data Management</h2></div>
+        <p class="text-muted" style="margin-bottom:16px;">These actions cannot be undone.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="loadSampleData()"><i class="fa-solid fa-rotate"></i> Reload Sample Data</button>
+          <button class="btn-danger" onclick="clearAllData()"><i class="fa-solid fa-trash"></i> Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ── ENGAGEMENT ── -->
+  <div class="page" id="page-engagement">
+    <div class="topbar">
+      <div><h1 class="page-title">Engagement Campaigns</h1><p class="page-subtitle">Send targeted weekly & monthly emails to re-engage customers and drive repeat purchases</p></div>
+      <div class="topbar-actions">
+        <button class="btn-outline-primary" onclick="openScheduleModal()"><i class="fa-solid fa-calendar-plus"></i> Schedule Campaign</button>
+      </div>
+    </div>
+
+    <!-- ── ENGAGEMENT EMAILS SECTION ── -->
+    <div class="engagement-section">
+      <div class="engagement-header">
+        <div>
+          <h2 class="engagement-title"><i class="fa-solid fa-rocket"></i> Templates</h2>
+          <p class="engagement-sub">Choose a template to get started</p>
+        </div>
+        <div class="engagement-header-actions">
+          <div class="eng-type-tabs" id="engTypeTabs">
+            <button class="eng-tab active" data-type="weekly" onclick="switchEngTab('weekly',this)"><i class="fa-solid fa-envelope"></i> Weekly</button>
+            <button class="eng-tab" data-type="monthly" onclick="switchEngTab('monthly',this)"><i class="fa-solid fa-calendar-days"></i> Monthly</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template Cards -->
+      <div class="eng-templates-grid" id="engTemplatesGrid"></div>
+
+      <!-- Campaign Stats Row -->
+      <div class="eng-stats-row">
+        <div class="eng-stat-pill" id="eng-stat-sent">
+          <i class="fa-solid fa-paper-plane"></i>
+          <div><span class="eng-stat-num" id="engStatSent">0</span><span class="eng-stat-lbl">Sent</span></div>
+        </div>
+        <div class="eng-stat-pill" id="eng-stat-opened">
+          <i class="fa-solid fa-envelope-open"></i>
+          <div><span class="eng-stat-num" id="engStatOpened">0</span><span class="eng-stat-lbl">Opened</span></div>
+        </div>
+        <div class="eng-stat-pill" id="eng-stat-clicked">
+          <i class="fa-solid fa-cursor"></i>
+          <div><span class="eng-stat-num" id="engStatClicked">0</span><span class="eng-stat-lbl">Clicked</span></div>
+        </div>
+        <div class="eng-stat-pill" id="eng-stat-converted">
+          <i class="fa-solid fa-bag-shopping"></i>
+          <div><span class="eng-stat-num" id="engStatConverted">0</span><span class="eng-stat-lbl">Converted</span></div>
+        </div>
+        <div class="eng-stat-pill eng-stat-rate">
+          <i class="fa-solid fa-chart-line"></i>
+          <div><span class="eng-stat-num" id="engStatRate">0%</span><span class="eng-stat-lbl">Conv. Rate</span></div>
+        </div>
+      </div>
+
+      <!-- ── EMAIL TRACKING TABLE ── -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-table-list" style="color:var(--primary)"></i> Email Tracking
+            <span class="badge" id="emailTrackingCount">0</span>
+          </h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="emailTrackingSearch" class="search-input"
+              placeholder="Search customer…" oninput="renderEmailTracking()" style="width:200px">
+            <div class="feedback-filter-tabs">
+              <button class="fb-tab active" onclick="filterEmailTracking('all',this)">All</button>
+              <button class="fb-tab" onclick="filterEmailTracking('feedback',this)">👋 Feedback</button>
+              <button class="fb-tab" onclick="filterEmailTracking('weekly',this)">📅 Weekly</button>
+              <button class="fb-tab" onclick="filterEmailTracking('monthly',this)">📆 Monthly</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Customer Name</th>
+                <th>Email Type</th>
+                <th>Send Status</th>
+                <th>Sent Date &amp; Time</th>
+                <th>Scheduled Date</th>
+                <th>Response</th>
+              </tr>
+            </thead>
+            <tbody id="emailTrackingBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="emailTrackingEmpty" style="display:none">No email records found.</p>
+      </div>
+
+      <!-- Sent Campaigns History -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-clock-rotate-left"></i> Campaign History</h2>
+          <button class="btn-secondary" style="font-size:12px;padding:7px 14px" onclick="clearCampaignHistory()"><i class="fa-solid fa-trash"></i> Clear</button>
+        </div>
+        <div id="campaignHistoryList" class="campaign-history-list"></div>
+        <p class="empty-state" id="campaignHistoryEmpty" style="display:none;">No campaigns sent yet. Use a template above to get started!</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Customer Modal -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="customerModalTitle">Add Customer</h2>
+      <button class="modal-close" onclick="closeCustomerModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editCustomerId">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="custName" class="form-input" placeholder="e.g. Zara Tariq"></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="custEmail" class="form-input" placeholder="zara@example.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Phone</label><input type="tel" id="custPhone" class="form-input" placeholder="+92-300-0000000"></div>
+
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Amount ($)</label><input type="number" id="custAmount" class="form-input" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="custStatus" class="form-input">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="lead">Lead</option>
+            <option value="vip">VIP</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeCustomerModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveCustomer()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lead Modal -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Lead</h2>
+      <button class="modal-close" onclick="closeLeadModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Deal Title *</label><input type="text" id="leadTitle" class="form-input" placeholder="e.g. Website Redesign"></div>
+        <div class="form-group"><label>Contact Name *</label><input type="text" id="leadContact" class="form-input" placeholder="e.g. Zara Tariq"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Deal Value ($)</label><input type="number" id="leadValue" class="form-input" placeholder="5000" min="0"></div>
+        <div class="form-group"><label>Stage</label>
+          <select id="leadStage" class="form-input">
+            <option value="lead">New Lead</option>
+            <option value="contacted">Contacted</option>
+            <option value="proposal">Proposal Sent</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeLeadModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveLead()"><i class="fa-solid fa-floppy-disk"></i> Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Invoice</h2>
+      <button class="modal-close" onclick="closeInvoiceModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Customer Name *</label><input type="text" id="invCustomer" class="form-input" placeholder="e.g. Ali Hassan"></div>
+        <div class="form-group"><label>Amount ($) *</label><input type="number" id="invAmount" class="form-input" placeholder="0.00" min="0" step="0.01"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Invoice Date</label><input type="date" id="invDate" class="form-input"></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="invDue" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label>
+          <select id="invStatus" class="form-input">
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Description</label><input type="text" id="invDesc" class="form-input" placeholder="Services rendered…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveInvoice()"><i class="fa-solid fa-floppy-disk"></i> Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Email Preview Modal -->
+<div class="modal-overlay" id="emailPreviewModal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-eye" style="color:var(--primary);margin-right:8px"></i> Email Preview</h2>
+      <button class="modal-close" onclick="closeEmailPreview()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div class="email-preview-meta">
+        <div class="email-meta-row"><span class="email-meta-label">Subject</span><span id="previewSubject" class="email-meta-val"></span></div>
+        <div class="email-meta-row"><span class="email-meta-label">Type</span><span id="previewType" class="email-meta-val"></span></div>
+        <div class="email-meta-row"><span class="email-meta-label">Recipients</span><span id="previewRecipients" class="email-meta-val"></span></div>
+      </div>
+      <div class="email-preview-body" id="previewBody"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeEmailPreview()">Close</button>
+      <button class="btn-primary" id="previewSendBtn" onclick="sendPreviewedEmail()"><i class="fa-solid fa-paper-plane"></i> Send Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Campaign Modal -->
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-calendar-plus" style="color:var(--primary);margin-right:8px"></i> Schedule Campaign</h2>
+      <button class="modal-close" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campaign Name *</label>
+          <input type="text" id="schedName" class="form-input" placeholder="e.g. Summer Re-engagement">
+        </div>
+        <div class="form-group">
+          <label>Email Type</label>
+          <select id="schedType" class="form-input">
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Template</label>
+          <select id="schedTemplate" class="form-input">
+            <option value="winback">Win-Back Offer</option>
+            <option value="newproduct">New Product Launch</option>
+            <option value="loyalty">Loyalty Reward</option>
+            <option value="seasonal">Seasonal Promo</option>
+            <option value="checkin">Weekly Check-In</option>
+            <option value="tips">Pro Tips &amp; Tricks</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Target Audience</label>
+          <select id="schedAudience" class="form-input">
+            <option value="all">All Customers</option>
+            <option value="inactive">Inactive Only</option>
+            <option value="active">Active Only</option>
+            <option value="vip">VIP Only</option>
+            <option value="lead">Leads</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Send Date</label>
+          <input type="date" id="schedDate" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Send Time</label>
+          <input type="time" id="schedTime" class="form-input" value="09:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Custom Message (optional)</label>
+        <textarea id="schedMessage" class="form-input" rows="3" placeholder="Add a personal note to include in the email…" style="resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeScheduleModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveScheduledCampaign()"><i class="fa-solid fa-calendar-check"></i> Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toastBox"></div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- App JS -->
+<script src="script.js"></script>
+</body>
+</html>
